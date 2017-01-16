@@ -94,6 +94,9 @@ final class DataModel extends Nette\Object
 		} elseif ($source instanceof ICollection) {
 			$source = new DataSource\NextrasDataSource($source, $primary_key);
 
+		} elseif ($source instanceof \ElasticsearchService) {
+			$source = new DataSource\ElasticsearchDataSource($source, $primary_key);
+
 		} else {
 			throw new DataGridWrongDataSourceException(sprintf(
 				"DataGrid can not take [%s] as data source.",
