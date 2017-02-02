@@ -1,9 +1,12 @@
 <?php
 
+// nástin metody pro pull request do Ublaboo datagridu
+
 /**
  * @copyright   Copyright (c) 2015 ublaboo <ublaboo@paveljanda.com>
  * @author      Martin Skyba
  * @author      Petr Martinec
+ * @author      Pavel Janda <me@paveljanda.com>
  * @package     Ublaboo
  */
 
@@ -35,7 +38,7 @@ class ElasticsearchDataSource extends FilterableDataSource implements IDataSourc
 	 */
 	public function getCount()
 	{
-		return $this->data_source->getCount();
+		return $this->data_source->count();
 	}
 
 
@@ -45,7 +48,7 @@ class ElasticsearchDataSource extends FilterableDataSource implements IDataSourc
 	 */
 	public function getData()
 	{
-		return $this->data_source->search();
+		return $this->data_source->execute()->getSimpleArray();
 	}
 
 
@@ -83,27 +86,12 @@ class ElasticsearchDataSource extends FilterableDataSource implements IDataSourc
 	 */
 	public function applyFilterDateRange(Filter\FilterDateRange $filter)
 	{
-		$this->data_source->cleanRange();
-
 		$conditions = $filter->getCondition();
 
 		$value_from = $conditions[$filter->getColumn()]['from'];
 		$value_to   = $conditions[$filter->getColumn()]['to'];
 
-		$tmp = array();
-
-		if($value_from != ""){
-			$date = \DateTime::createFromFormat('d. m. Y', $value_from);
-       		$tmp[$filter->getColumn()]["gte"] = $date->getTimestamp() * 1000;
-    	}
-		if($value_to != ""){
-			$date = \DateTime::createFromFormat('d. m. Y', $value_to);
-        	$tmp[$filter->getColumn()]["lte"] = $date->getTimestamp() * 1000;
-    	}
-
-		$range[] = $tmp;
-
-		$this->data_source->setRange($range);
+		$this->data_source->addDateRange($filter->getColumn(),$value_from,$value_to,"dd. MM. yyyy");
 	}
 
 
@@ -124,7 +112,11 @@ class ElasticsearchDataSource extends FilterableDataSource implements IDataSourc
 	 */
 	public function applyFilterSelect(Filter\FilterSelect $filter)
 	{
-		$this->data_source->addFilter($filter->getCondition());
+		$condition = $filter->getCondition();
+
+		foreach ($condition as $column => $value) {
+			$this->data_source->addTerm($column, $value);			
+		}
 	}
 
 	/**
@@ -152,9 +144,12 @@ class ElasticsearchDataSource extends FilterableDataSource implements IDataSourc
 	{
 		$condition = $filter->getCondition();
 		foreach ($condition as $column => $value) {
-			$this->data_source->addFilter(array($column => $value));			
+			$this->data_source->addWildcard($column, "*" . strtolower($value) . "*");			
+			// pokud wildcard bude hodne casove narocne -> pouzit jinou z nasledujicich variant
+			// $this->data_source->addPreifx($column, strtolower($value));			
+			// $this->data_source->addMatch($column, strtolower($value));			
+			// $this->data_source->addTerm($column, strtolower($value));			
 		}
-
 		return $this;
 	}
 
@@ -166,8 +161,10 @@ class ElasticsearchDataSource extends FilterableDataSource implements IDataSourc
 	 */
 	public function limit($offset, $limit)
 	{
-		$this->data_source->setSize($limit);
-		$this->data_source->setFrom($offset);
+		$this->data_source->size = $limit;
+		$this->data_source->from = $offset;
+
+		return $this;
 	}
 
 
@@ -178,10 +175,9 @@ class ElasticsearchDataSource extends FilterableDataSource implements IDataSourc
 	 */
 	public function sort(Sorting $sorting)
 	{
-		$this->data_source->cleanSort();
 		foreach ($sorting->sort as $key => $item) {
 			if($item !== "0"){
-				$this->data_source->setSort(array($key => strtolower($item)));
+				$this->data_source->addSort($key, strtolower($item));
 			}
 		}
 		return $this;
