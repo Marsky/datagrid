@@ -91,7 +91,7 @@ class ElasticsearchDataSource extends FilterableDataSource implements IDataSourc
 		$value_from = $conditions[$filter->getColumn()]['from'];
 		$value_to   = $conditions[$filter->getColumn()]['to'];
 
-		$this->data_source->addDateRange($filter->getColumn(),$value_from,$value_to,"dd. MM. yyyy");
+		$this->data_source->addDateRange($filter->getColumn(),$value_from,$value_to,"dd.MM.yyyy");
 	}
 
 
