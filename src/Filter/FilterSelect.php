@@ -105,6 +105,16 @@ class FilterSelect extends Filter
 
 
 	/**
+	 * Get filter condition
+	 * @return array
+	 */
+	public function getOptions()
+	{
+		return $this->options;
+	}
+
+
+	/**
 	 * @param Nette\Forms\Container $container
 	 * @param string                $key
 	 * @param string                $name
