@@ -143,8 +143,18 @@ class ElasticsearchDataSource extends FilterableDataSource implements IDataSourc
 	public function applyFilterText(Filter\FilterText $filter)
 	{
 		$condition = $filter->getCondition();
-		foreach ($condition as $column => $value) {
-			$this->data_source->addWildcard($column, "*" . strtolower($value) . "*");			
+		foreach ($condition as $column => $value)
+		{
+			//hack pro id, uuid a bundleUuid
+			if($column == 'id' || $column == 'uuid' || $column == 'bundleUuid')
+			{
+				$this->data_source->addWildcard($column.'.keyword', "*" . strtolower($value) . "*");
+			}
+			else
+			{
+				$this->data_source->addWildcard($column, "*" . strtolower($value) . "*"); // normální stav
+			}
+
 			// pokud wildcard bude hodne casove narocne -> pouzit jinou z nasledujicich variant
 			// $this->data_source->addPreifx($column, strtolower($value));			
 			// $this->data_source->addMatch($column, strtolower($value));			
