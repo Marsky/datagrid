@@ -69,7 +69,7 @@ class CsvDataModel
 		$header = [];
 
 		foreach ($this->columns as $column) {
-			$header[] = $this->translator->translate($column->getName());
+			$header[] = $column->isTranslatableHeader() ? $this->translator->translate($column->getName()) : $column->getName();
 		}
 
 		return $header;
