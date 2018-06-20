@@ -145,15 +145,14 @@ class ElasticsearchDataSource extends FilterableDataSource implements IDataSourc
 		$condition = $filter->getCondition();
 		foreach ($condition as $column => $value)
 		{
-			//hack pro id, uuid a bundleUuid
-			if($column == 'id' || $column == 'uuid' || $column == 'bundleUuid')
-			{
-				$this->data_source->addWildcard($column.'.keyword', "*" . strtolower($value) . "*");
-			}
-			else
-			{
-				$this->data_source->addWildcard($column, "*" . strtolower($value) . "*"); // normální stav
-			}
+			$this->data_source->addCustom([
+				'bool' => [
+					'should' => [
+						['wildcard' => [$column => "*" . strtolower($value) . "*"]],
+						['wildcard' => [$column.'.keyword' => "*" . $value . "*"]]
+					]
+				]
+			]);
 
 			// pokud wildcard bude hodne casove narocne -> pouzit jinou z nasledujicich variant
 			// $this->data_source->addPreifx($column, strtolower($value));			
